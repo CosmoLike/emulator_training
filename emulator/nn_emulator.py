@@ -26,15 +26,15 @@ class NNEmulator:
         self.dv_std = torch.Tensor(dv_std)
         
         self.model = nn.Sequential(
-                            nn.Linear(N_DIM, 1024),
+                            nn.Linear(N_DIM, 512),
                             nn.ReLU(),
-                            nn.Linear(1024, 1024),
+                            nn.Linear(512, 512),
                             nn.ReLU(),
-                            nn.Linear(1024, 1024),
+                            nn.Linear(512, 512),
                             nn.ReLU(),
-                            nn.Linear(1024, 1024),
+                            nn.Linear(512, 512),
                             nn.ReLU(),
-                            nn.Linear(1024, OUTPUT_DIM),
+                            nn.Linear(512, OUTPUT_DIM),
                             Affine()
                             )
 
@@ -62,7 +62,7 @@ class NNEmulator:
             self.y_std  = self.dv_std
 
         X_train = (X - self.X_mean) / self.X_std
-        y_train = y / self.dv_fid
+        y_train = (y - self.y_mean) / self.y_std
 
         trainset = torch.utils.data.TensorDataset(X_train, y_train)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=1)
@@ -96,7 +96,7 @@ class NNEmulator:
             X_norm = (X - X_mean) / X_std
             y_pred = self.model.eval()(X_norm).cpu()
             
-        y_pred = y_pred * self.dv_fid
+        y_pred = y_pred * self.y_std + self.y_mean
 
         return y_pred.numpy()
 
